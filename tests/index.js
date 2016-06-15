@@ -81,7 +81,10 @@ describe('SafeObject', function () {
     myNewType.should.have.property('type1').which.is.equal(null);
     myNewType.should.have.property('type2').which.is.equal(null);
 
+    myNewType.type3 = 3;
+    myNewType.type4 = 3;
 
+    SafeObject.debug(myNewType);
 
 
   });

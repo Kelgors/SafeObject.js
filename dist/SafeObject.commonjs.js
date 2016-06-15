@@ -10,6 +10,31 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var SafeObject = function () {
   _createClass(SafeObject, null, [{
+    key: 'debug',
+    value: function debug(instance) {
+      console.log('----- SafeObject debug -----');
+      console.log('Constructor: ', instance.constructor.name);
+      console.log('_isSafeObject: ' + String(instance._isSafeObject));
+      if (instance._isSafeObject) {
+        (function () {
+          var ancestors = instance._getAncestors();
+          console.log('Ancestors: ' + instance._getAncestors().map(function (d) {
+            return d.name;
+          }).join(' > '));
+          var attributeNames = instance._getAttributes().map(function (d) {
+            if (Array.isArray(d)) return d[0];
+            return d;
+          });
+          var registeredAttributeNames = ['_isSafeObject', 'destroy', '_getAncestors', '_getAttributes', '_clearAllInstanceProperties', '_parsePropertyDescriptor'].concat(attributeNames);
+          var unregisteredAttributeNames = Object.getOwnPropertyNames(instance).filter(function (d) {
+            return registeredAttributeNames.indexOf(d) === -1;
+          });
+          console.log('registered attributes: ', attributeNames.join(', '));
+          console.log('unregistered attributes: ', unregisteredAttributeNames.join(', '));
+        })();
+      }
+    }
+  }, {
     key: 'include',
     value: function include(instance) {
       if (instance._isSafeObject) return instance;

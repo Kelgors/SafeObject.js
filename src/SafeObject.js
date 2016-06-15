@@ -1,5 +1,23 @@
 export default class SafeObject {
 
+  static debug(instance) {
+    console.log('----- SafeObject debug -----');
+    console.log('Constructor: ', instance.constructor.name);
+    console.log('_isSafeObject: ' + String(instance._isSafeObject));
+    if (instance._isSafeObject) {
+      const ancestors = instance._getAncestors();
+      console.log('Ancestors: ' + instance._getAncestors().map(function (d) {return d.name;}).join(' > '));
+      const attributeNames = instance._getAttributes().map(function (d) {
+        if (Array.isArray(d)) return d[0];
+        return d;
+      });
+      const registeredAttributeNames = [ '_isSafeObject', 'destroy', '_getAncestors', '_getAttributes', '_clearAllInstanceProperties', '_parsePropertyDescriptor' ].concat(attributeNames);
+      const unregisteredAttributeNames = Object.getOwnPropertyNames(instance).filter(function (d)  { return registeredAttributeNames.indexOf(d) === -1; });
+      console.log('registered attributes: ', attributeNames.join(', '));
+      console.log('unregistered attributes: ', unregisteredAttributeNames.join(', '));
+    }
+  }
+
   static include(instance) {
     if (instance._isSafeObject) return instance;
 
