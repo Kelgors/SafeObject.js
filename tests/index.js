@@ -68,6 +68,10 @@ describe('SafeObject', function () {
       SafeObject.include(this);
       this.type2 = 2;
     }
+
+    MyNewType.prototype._getIgnoredPropertyNames = function () {
+      return SafeObject.prototype._getIgnoredPropertyNames.call(this).concat([ 'type3' ]);
+    };
     MyNewType.INSTANCE_PROPERTIES = [ 'type1', 'type2' ];
 
     var myNewType = new MyNewType();

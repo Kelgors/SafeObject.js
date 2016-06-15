@@ -17,18 +17,11 @@ export default class SafeObject {
     return buffer.join('\n');
   }
 
-  static include(instance) {
+  static include(instance, options = {}) {
     if (instance._isSafeObject) return instance;
 
     [ 'destroy', '_getAncestors', '_getRegisteredProperties', '_getRegisteredPropertyNames', '_getIgnoredPropertyNames', '_getUnregisteredPropertyNames', '_clearAllInstanceProperties', '_parsePropertyDescriptor' ].forEach(function (methodName) {
-      if (methodName === 'destroy' && typeof instance[methodName] === 'function') {
-        const oldMethod = instance[methodName];
-        instance[methodName] = function () {
-          var returnedValue = oldMethod.apply(this, arguments);
-          SafeObject.prototype[methodName].call(this, arguments);
-          return returnedValue;
-        };
-      } else {
+      if (!instance[methodName] || instance[methodName] && options.force) {
         instance[methodName] = SafeObject.prototype[methodName];
       }
     });
