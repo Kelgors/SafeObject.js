@@ -84,7 +84,7 @@ describe('SafeObject', function () {
     myNewType.type3 = 3;
     myNewType.type4 = 3;
 
-    SafeObject.debug(myNewType);
+    console.log(SafeObject.debug(myNewType));
 
 
   });

@@ -1,32 +1,32 @@
 export default class SafeObject {
 
   static debug(instance) {
-    console.log('----- SafeObject debug -----');
-    console.log('Constructor: ', instance.constructor.name);
-    console.log('_isSafeObject: ' + String(instance._isSafeObject));
+    const buffer = [];
+    buffer.push('----- SafeObject debug -----');
+    buffer.push('Constructor: ' + String(instance.constructor.name));
+    buffer.push('_isSafeObject: ' + String(instance._isSafeObject));
     if (instance._isSafeObject) {
       const ancestors = instance._getAncestors();
-      console.log('Ancestors: ' + instance._getAncestors().map(function (d) {return d.name;}).join(' > '));
-      const attributeNames = instance._getAttributes().map(function (d) {
-        if (Array.isArray(d)) return d[0];
-        return d;
-      });
-      const registeredAttributeNames = [ '_isSafeObject', 'destroy', '_getAncestors', '_getAttributes', '_clearAllInstanceProperties', '_parsePropertyDescriptor' ].concat(attributeNames);
+      buffer.push('Ancestors: ' + instance._getAncestors().map(function (d) {return d.name;}).join(' > '));
+      const attributeNames = instance._getRegisteredPropertyNames();
+      const registeredAttributeNames = instance._getIgnoredPropertyNames().concat(attributeNames);
       const unregisteredAttributeNames = Object.getOwnPropertyNames(instance).filter(function (d)  { return registeredAttributeNames.indexOf(d) === -1; });
-      console.log('registered attributes: ', attributeNames.join(', '));
-      console.log('unregistered attributes: ', unregisteredAttributeNames.join(', '));
+      buffer.push('registered attributes: ' + attributeNames.join(', '));
+      buffer.push('unregistered attributes: ' + unregisteredAttributeNames.join(', '));
     }
+    return buffer.join('\n');
   }
 
   static include(instance) {
     if (instance._isSafeObject) return instance;
 
-    [ 'destroy', '_getAncestors', '_getAttributes', '_clearAllInstanceProperties', '_parsePropertyDescriptor' ].forEach(function (methodName) {
+    [ 'destroy', '_getAncestors', '_getRegisteredProperties', '_getRegisteredPropertyNames', '_getIgnoredPropertyNames', '_getUnregisteredPropertyNames', '_clearAllInstanceProperties', '_parsePropertyDescriptor' ].forEach(function (methodName) {
       if (methodName === 'destroy' && typeof instance[methodName] === 'function') {
         const oldMethod = instance[methodName];
         instance[methodName] = function () {
+          var returnedValue = oldMethod.apply(this, arguments);
           SafeObject.prototype[methodName].call(this, arguments);
-          oldMethod.apply(this, arguments);
+          return returnedValue;
         };
       } else {
         instance[methodName] = SafeObject.prototype[methodName];
@@ -59,7 +59,11 @@ export default class SafeObject {
     return out;
   }
 
-  _getAttributes() {
+  _getIgnoredPropertyNames() {
+    return [ '_isSafeObject', 'destroy', '_getAncestors', '_getRegisteredProperties', '_getRegisteredPropertyNames', '_getUnregisteredPropertyNames', '_getIgnoredPropertyNames', '_clearAllInstanceProperties', '_parsePropertyDescriptor' ];
+  }
+
+  _getRegisteredProperties() {
     const ancestors = [ this.constructor ].concat(this._getAncestors());
     const out = [];
     for (let index = 0; index < ancestors.length; index++) {
@@ -68,9 +72,18 @@ export default class SafeObject {
     return out;
   }
 
+  _getRegisteredPropertyNames() {
+    return this._getRegisteredProperties().map(function (d) { return Array.isArray(d) ? d[0] : d; });
+  }
+
+  _getUnregisteredPropertyNames() {
+    const registeredAttributeNames = this._getRegisteredPropertyNames();
+    return Object.getOwnPropertyNames(this).filter(function (propertyName)  { return registeredAttributeNames.indexOf(propertyName) === -1; });
+  }
+
   _clearAllInstanceProperties(state) {
     const Constructor = this.constructor;
-    const instanceProperties = this._getAttributes();
+    const instanceProperties = this._getRegisteredProperties();
     for (let index = 0; index < instanceProperties.length; index++) {
       try {
         const attributeDescriptor = instanceProperties[index];

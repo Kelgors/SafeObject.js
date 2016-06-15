@@ -12,40 +12,40 @@ var SafeObject = function () {
   _createClass(SafeObject, null, [{
     key: 'debug',
     value: function debug(instance) {
-      console.log('----- SafeObject debug -----');
-      console.log('Constructor: ', instance.constructor.name);
-      console.log('_isSafeObject: ' + String(instance._isSafeObject));
+      var buffer = [];
+      buffer.push('----- SafeObject debug -----');
+      buffer.push('Constructor: ' + String(instance.constructor.name));
+      buffer.push('_isSafeObject: ' + String(instance._isSafeObject));
       if (instance._isSafeObject) {
         (function () {
           var ancestors = instance._getAncestors();
-          console.log('Ancestors: ' + instance._getAncestors().map(function (d) {
+          buffer.push('Ancestors: ' + instance._getAncestors().map(function (d) {
             return d.name;
           }).join(' > '));
-          var attributeNames = instance._getAttributes().map(function (d) {
-            if (Array.isArray(d)) return d[0];
-            return d;
-          });
-          var registeredAttributeNames = ['_isSafeObject', 'destroy', '_getAncestors', '_getAttributes', '_clearAllInstanceProperties', '_parsePropertyDescriptor'].concat(attributeNames);
+          var attributeNames = instance._getRegisteredPropertyNames();
+          var registeredAttributeNames = instance._getIgnoredPropertyNames().concat(attributeNames);
           var unregisteredAttributeNames = Object.getOwnPropertyNames(instance).filter(function (d) {
             return registeredAttributeNames.indexOf(d) === -1;
           });
-          console.log('registered attributes: ', attributeNames.join(', '));
-          console.log('unregistered attributes: ', unregisteredAttributeNames.join(', '));
+          buffer.push('registered attributes: ' + attributeNames.join(', '));
+          buffer.push('unregistered attributes: ' + unregisteredAttributeNames.join(', '));
         })();
       }
+      return buffer.join('\n');
     }
   }, {
     key: 'include',
     value: function include(instance) {
       if (instance._isSafeObject) return instance;
 
-      ['destroy', '_getAncestors', '_getAttributes', '_clearAllInstanceProperties', '_parsePropertyDescriptor'].forEach(function (methodName) {
+      ['destroy', '_getAncestors', '_getRegisteredProperties', '_getRegisteredPropertyNames', '_getIgnoredPropertyNames', '_getUnregisteredPropertyNames', '_clearAllInstanceProperties', '_parsePropertyDescriptor'].forEach(function (methodName) {
         if (methodName === 'destroy' && typeof instance[methodName] === 'function') {
           (function () {
             var oldMethod = instance[methodName];
             instance[methodName] = function () {
+              var returnedValue = oldMethod.apply(this, arguments);
               SafeObject.prototype[methodName].call(this, arguments);
-              oldMethod.apply(this, arguments);
+              return returnedValue;
             };
           })();
         } else {
@@ -85,8 +85,13 @@ var SafeObject = function () {
       return out;
     }
   }, {
-    key: '_getAttributes',
-    value: function _getAttributes() {
+    key: '_getIgnoredPropertyNames',
+    value: function _getIgnoredPropertyNames() {
+      return ['_isSafeObject', 'destroy', '_getAncestors', '_getRegisteredProperties', '_getRegisteredPropertyNames', '_getUnregisteredPropertyNames', '_getIgnoredPropertyNames', '_clearAllInstanceProperties', '_parsePropertyDescriptor'];
+    }
+  }, {
+    key: '_getRegisteredProperties',
+    value: function _getRegisteredProperties() {
       var ancestors = [this.constructor].concat(this._getAncestors());
       var out = [];
       for (var index = 0; index < ancestors.length; index++) {
@@ -95,10 +100,25 @@ var SafeObject = function () {
       return out;
     }
   }, {
+    key: '_getRegisteredPropertyNames',
+    value: function _getRegisteredPropertyNames() {
+      return this._getRegisteredProperties().map(function (d) {
+        return Array.isArray(d) ? d[0] : d;
+      });
+    }
+  }, {
+    key: '_getUnregisteredPropertyNames',
+    value: function _getUnregisteredPropertyNames() {
+      var registeredAttributeNames = this._getRegisteredPropertyNames();
+      return Object.getOwnPropertyNames(this).filter(function (propertyName) {
+        return registeredAttributeNames.indexOf(propertyName) === -1;
+      });
+    }
+  }, {
     key: '_clearAllInstanceProperties',
     value: function _clearAllInstanceProperties(state) {
       var Constructor = this.constructor;
-      var instanceProperties = this._getAttributes();
+      var instanceProperties = this._getRegisteredProperties();
       for (var index = 0; index < instanceProperties.length; index++) {
         try {
           var attributeDescriptor = instanceProperties[index];
