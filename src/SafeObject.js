@@ -67,7 +67,7 @@ export default class SafeObject {
         if (state === SafeObject.SAFE_OBJECT_INITIALIZE && fieldName && descriptor) {
           Object.defineProperty(this, fieldName, descriptor);
         } else if (state === SafeObject.SAFE_OBJECT_DESTROY && fieldName) {
-          if (this[fieldName] && typeof this[fieldName].destroy === 'function') {
+          if (this[fieldName] && typeof this[fieldName].destroy === 'function' && this._isSafeObject) {
             this[fieldName].destroy();
           }
           this[fieldName] = null;
