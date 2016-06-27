@@ -7,7 +7,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 (function (exportName) {
 
   function warn() {
-    if (typeof console === 'undefined' || SafeObject.debugMode) return;
+    if (typeof console === 'undefined' || !SafeObject.debugMode) return;
     if (console.warn) console.warn.apply(console, arguments);else if (console.log) console.log.apply(console, arguments);
   }
 
