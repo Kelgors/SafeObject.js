@@ -1,6 +1,10 @@
 (function (exportName) {
-  //function warn(message) {}
-  const warn = console.warn.bind(console);
+
+  function warn() {
+    if (typeof console === 'undefined' || SafeObject.debugMode) return;
+    if (console.warn) console.warn.apply(console, arguments);
+    else if (console.log) console.log.apply(console, arguments);
+  }
 
   class PropertyDescriptor {
     constructor(value, enumerable, writable, configurable) {
@@ -171,6 +175,7 @@
 
   }
 
+  SafeObject.debugMode = false;
   SafeObject.SAFE_OBJECT_INITIALIZE = 1;
   SafeObject.SAFE_OBJECT_DESTROY = 2;
 

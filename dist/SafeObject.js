@@ -5,8 +5,11 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 (function (exportName) {
-  //function warn(message) {}
-  var warn = console.warn.bind(console);
+
+  function warn() {
+    if (typeof console === 'undefined' || SafeObject.debugMode) return;
+    if (console.warn) console.warn.apply(console, arguments);else if (console.log) console.log.apply(console, arguments);
+  }
 
   var PropertyDescriptor = function () {
     function PropertyDescriptor(value, enumerable, writable, configurable) {
@@ -216,6 +219,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     return SafeObject;
   }();
 
+  SafeObject.debugMode = false;
   SafeObject.SAFE_OBJECT_INITIALIZE = 1;
   SafeObject.SAFE_OBJECT_DESTROY = 2;
 
