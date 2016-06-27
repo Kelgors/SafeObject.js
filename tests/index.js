@@ -1,96 +1,114 @@
 require('chai').should();
-const SafeObject = require('../dist/SafeObject.commonjs.js').default;
+const SafeObject = require('../dist/SafeObject.js');
+const Human = require('./things/Human.js');
+const SuperHuman = require('./things/SuperHuman.js');
+const Whale = require('./things/Whale.js');
+const SuperWhale = require('./things/SuperWhale.js');
 
 console.log('Hello');
 
 describe('SafeObject', function () {
 
-  var View = (function (_super) {
-    function View() {
-      _super.constructor.call(this);
-    }
-    View.prototype = Object.create(_super, {
-      constructor: { value: View }
-    });
-    View.INSTANCE_PROPERTIES = [ 'data', 'childViews' ];
-    return View;
-  })(SafeObject.prototype);
+  it('should have property _isSafeObject', function () {
+    const human = new Human('George');
+    const superHuman = new SuperHuman('Martha');
+    human.should.have.property('_isSafeObject').and.be.equal(true);
+    superHuman.should.have.property('_isSafeObject').and.be.equal(true);
 
-  var FatView = (function (_super) {
-    function FatView() {
-      _super.constructor.call(this);
-    }
-    FatView.prototype = Object.create(_super, {
-      constructor: { value: FatView }
-    });
-    FatView.INSTANCE_PROPERTIES = [ 'fatViewAttribute' ];
-    return FatView;
-  })(View.prototype);
-
-  it('should have properties into the instance', function () {
-
-    var view = new View();
-    view.should.have.property('data').which.is.equal(null);
-    view.should.have.property('childViews').which.is.equal(null);
-
-    view.data = [];
-    view.childViews = [];
-
-    view.destroy();
-    view.should.have.property('data').which.is.equal(null);
-    view.should.have.property('childViews').which.is.equal(null);
-
+    human.should.be.an.instanceOf(SafeObject);
+    superHuman.should.be.an.instanceOf(SafeObject);
   });
 
-  it('should have properties of all ancestors', function () {
+  it('should list ancestors', function () {
+    const human = new Human('George');
+    const superHuman = new SuperHuman('Martha');
 
-    var fatview = new FatView();
-    fatview.should.have.property('fatViewAttribute').which.is.equal(null);
-    fatview.should.have.property('data').which.is.equal(null);
-    fatview.should.have.property('childViews').which.is.equal(null);
-
-    var destroyCalled = false;
-    fatview.childViews = new SafeObject();
-    fatview.childViews.destroy = function () {
-      destroyCalled = true;
-      View.prototype.destroy.call(this);
-    };
-
-    fatview.destroy();
-
-    destroyCalled.should.be.equal(true);
-
+    SafeObject.getAncestors(human).should.be.eql([ SafeObject, Object ]);
+    SafeObject.getAncestors(superHuman).should.be.eql([ Human, SafeObject, Object ]);
   });
 
-  it('should do the same thing with include method', function () {
+  it('should list all instance properties for the class and all ancestors', function () {
+    const human = new Human('George');
+    const superHuman = new SuperHuman('Martha');
 
-    function MyNewType() {
-      SafeObject.include(this);
-      this.type2 = 2;
-    }
+    SafeObject.getRegisteredPropertyNames(human).should.be.eql([ 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', '_isSafeObject' ]);
+    SafeObject.getRegisteredPropertyNames(superHuman).should.be.eql([ 'superPowers', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', '_isSafeObject' ]);
+  });
 
-    MyNewType.prototype._getIgnoredPropertyNames = function () {
-      return SafeObject.prototype._getIgnoredPropertyNames.call(this).concat([ 'type3' ]);
-    };
-    MyNewType.INSTANCE_PROPERTIES = [ 'type1', 'type2' ];
+  it('should give the ignored properties', function () {
+    const superHuman = new SuperHuman('Martha');
+    superHuman._getIgnoredSafeObjectPropertyNames().should.have.length(1);
+    //  .and.should.eql([ 'ignoreMe' ]);
+  });
 
-    var myNewType = new MyNewType();
+  it('should give the correct unregistered properties', function () {
+    const superHuman = new SuperHuman('Martha');
+    SafeObject.getUnregisteredPropertyNames(superHuman).should.have.length(1);
+  });
 
-    myNewType.should.have.property('type1').which.is.equal(null);
-    myNewType.should.have.property('type2').which.is.equal(2);
-    myNewType.should.have.property('destroy');
+  it('should set all properties to null', function () {
+    var ref1 = {};
+    var ref2 = {};
+    var ref3 = {};
+    var ref4 = {};
 
-    myNewType.destroy();
+    var superHuman = new SuperHuman('Martha');
+    superHuman.leftArm = ref1;
+    superHuman.rightArm = ref2;
+    superHuman.leftLeg = ref3;
+    superHuman.rightLeg = ref4;
 
-    myNewType.should.have.property('type1').which.is.equal(null);
-    myNewType.should.have.property('type2').which.is.equal(null);
+    superHuman.destroy();
+    superHuman.should.have.property('leftArm').and.be.equal(null);
+    superHuman.should.have.property('rightArm').and.be.equal(null);
+    superHuman.should.have.property('leftLeg').and.be.equal(null);
+    superHuman.should.have.property('rightLeg').and.be.equal(null);
+  });
 
-    myNewType.type3 = 3;
-    myNewType.type4 = 3;
+  after(function () {
+    console.log(SafeObject.debug(new SuperHuman('Martha')));
+  });
 
-    console.log(SafeObject.debug(myNewType));
+});
 
+describe('SafeObject Inclusion', function () {
 
+  it('should have property _isSafeObject', function () {
+    const superWhale = new SuperWhale('Martha');
+    superWhale.should.have.property('_isSafeObject').and.be.equal(true);
+    superWhale.should.not.be.an.instanceOf(SafeObject);
+  });
+
+  it('should list ancestors', function () {
+    const superWhale = new SuperWhale('Martha');
+    SafeObject.getAncestors(superWhale).should.be.eql([ Whale, Object ]);
+  });
+
+  it('should list all instance properties for the class and all ancestors', function () {
+    const superWhale = new SuperWhale('Martha');
+    SafeObject.getRegisteredPropertyNames(superWhale).should.be.eql([ 'name', '_isSafeObject', 'destroy', '_getIgnoredSafeObjectPropertyNames' ]);
+  });
+
+  it('should give the ignored properties', function () {
+    const superWhale = new SuperWhale('Martha');
+    superWhale._getIgnoredSafeObjectPropertyNames().should.have.length(0);
+  });
+
+  it('should give the correct unregistered properties', function () {
+    const superWhale = new SuperWhale('Martha');
+    SafeObject.getUnregisteredPropertyNames(superWhale).should.have.length(0);
+  });
+
+  it('should set all properties to null', function () {
+
+    var superWhale = new SuperWhale('Martha');
+
+    superWhale.destroy();
+    superWhale.should.have.property('name').and.be.equal(null);
+  });
+
+  after(function () {
+    console.log(SafeObject.debug(new SuperWhale('Martha')));
   });
 
 });
