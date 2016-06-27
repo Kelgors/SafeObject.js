@@ -78,13 +78,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           var methodName = _ref.methodName;
           var returnsMerge = _ref.returnsMerge;
 
-          if (!options.force && methodName in instance) {
-            warn('Overriding ' + methodName + ' method');
-          }
           // check if property exists and is a method
           var hasProperty = methodName in instance;
           var isFunction = typeof instance[methodName] === 'function';
           var _superMethod = instance[methodName];
+          if (options.force && hasProperty) {
+            warn('Overriding ' + methodName + ' method');
+          }
           // define the method only if it hasnt the property or 'force' is true
           if (hasProperty && options.force || !hasProperty) {
             if (instanceProperties.findIndex(function (d) {

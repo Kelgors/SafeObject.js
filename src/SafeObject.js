@@ -54,13 +54,13 @@
         { methodName: 'destroy', returnsMerge: 'super' },
         { methodName: '_getIgnoredSafeObjectPropertyNames', returnsMerge: 'concat' }
       ].forEach(function ({ methodName, returnsMerge }) {
-        if (!options.force && methodName in instance) {
-          warn('Overriding ' + methodName + ' method');
-        }
         // check if property exists and is a method
         const hasProperty = methodName in instance;
         const isFunction = typeof instance[methodName] === 'function';
         const _superMethod = instance[methodName];
+        if (options.force && hasProperty) {
+          warn('Overriding ' + methodName + ' method');
+        }
         // define the method only if it hasnt the property or 'force' is true
         if (hasProperty && options.force || !hasProperty) {
           if (instanceProperties.findIndex(function (d) {
