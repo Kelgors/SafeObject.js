@@ -4,7 +4,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-(function (root, exportName) {
+(function (exportName) {
   //function warn(message) {}
   var warn = console.warn.bind(console);
 
@@ -230,6 +230,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   } else if (typeof module !== 'undefined' && module.exports) {
     module.exports = SafeObject;
   } else {
-    root[exportName] = SafeObject;
+    this[exportName] = SafeObject;
   }
-})(undefined, 'SafeObject');
+})('SafeObject');

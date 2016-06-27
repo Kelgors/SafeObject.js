@@ -1,4 +1,4 @@
-(function (root, exportName) {
+(function (exportName) {
   //function warn(message) {}
   const warn = console.warn.bind(console);
 
@@ -187,8 +187,8 @@
   } else if (typeof module !== 'undefined' && module.exports) {
     module.exports = SafeObject;
   } else {
-    root[exportName] = SafeObject;
+    this[exportName] = SafeObject;
   }
-})(this, 'SafeObject');
+})('SafeObject');
 
 
