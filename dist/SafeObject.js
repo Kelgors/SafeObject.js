@@ -224,7 +224,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   SafeObject.PropertyDescriptor = PropertyDescriptor;
 
   if (typeof define === 'function' && define.amd) {
-    define(SafeObject);
+    define(function () {
+      return SafeObject;
+    });
   } else if (typeof module !== 'undefined' && module.exports) {
     module.exports = SafeObject;
   } else {
