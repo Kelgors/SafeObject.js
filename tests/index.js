@@ -1,11 +1,14 @@
 require('chai').should();
+
+const TEST_LOGS = !!process.env.TEST_VERBOSITY;
+
 const SafeObject = require('../dist/SafeObject.js');
 const Human = require('./things/Human.js');
 const SuperHuman = require('./things/SuperHuman.js');
 const Whale = require('./things/Whale.js');
 const SuperWhale = require('./things/SuperWhale.js');
 
-console.log('Hello');
+if (TEST_LOGS) console.log('Hello');
 
 describe('SafeObject', function () {
 
@@ -65,9 +68,13 @@ describe('SafeObject', function () {
     superHuman.should.have.property('rightLeg').and.be.equal(null);
   });
 
-  after(function () {
-    console.log(SafeObject.debug(new SuperHuman('Martha')));
-  });
+  if (TEST_LOGS) {
+
+    after(function () {
+      console.log(SafeObject.debug(new SuperHuman('Martha')));
+    });
+
+  }
 
 });
 
@@ -107,8 +114,12 @@ describe('SafeObject Inclusion', function () {
     superWhale.should.have.property('name').and.be.equal(null);
   });
 
-  after(function () {
-    console.log(SafeObject.debug(new SuperWhale('Martha')));
-  });
+  if (TEST_LOGS) {
+
+    after(function () {
+      console.log(SafeObject.debug(new SuperWhale('Martha')));
+    });
+
+  }
 
 });
