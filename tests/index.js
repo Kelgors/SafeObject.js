@@ -35,7 +35,7 @@ describe('SafeObject', function () {
     const superHuman = new SuperHuman('Martha');
 
     SafeObject.getRegisteredPropertyNames(human).should.be.eql([ 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', '_isSafeObject' ]);
-    SafeObject.getRegisteredPropertyNames(superHuman).should.be.eql([ 'superPowers', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', '_isSafeObject' ]);
+    SafeObject.getRegisteredPropertyNames(superHuman).should.be.eql([ 'superPowers', 'superPowersMap', 'isSafeObject', 'superName', 'musclesPerSquareCentimeter', 'superFriends', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', '_isSafeObject' ]);
   });
 
   it('should give the ignored properties', function () {
@@ -47,6 +47,12 @@ describe('SafeObject', function () {
   it('should give the correct unregistered properties', function () {
     const superHuman = new SuperHuman('Martha');
     SafeObject.getUnregisteredPropertyNames(superHuman).should.have.length(1);
+  });
+
+  it('should interpret factories and methods differently', function () {
+    const superHuman = new SuperHuman('Martha');
+    superHuman.should.have.property('isSafeObject').and.be.a.instanceOf(Function);
+    superHuman.should.have.property('superPowers').and.be.a.instanceOf(Array);
   });
 
   it('should set all properties to null', function () {
@@ -66,6 +72,12 @@ describe('SafeObject', function () {
     superHuman.should.have.property('rightArm').and.be.equal(null);
     superHuman.should.have.property('leftLeg').and.be.equal(null);
     superHuman.should.have.property('rightLeg').and.be.equal(null);
+  });
+
+  it('should set superPowers properties to [] insteadof function () {}', function () {
+    var superHuman = new SuperHuman('Martha');
+    superHuman.should.have.property('superPowers').and.be.eql([]);
+    superHuman.should.have.property('superPowersMap').and.be.eql({})
   });
 
   if (TEST_LOGS) {

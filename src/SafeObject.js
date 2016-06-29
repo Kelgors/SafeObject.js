@@ -7,7 +7,8 @@
   }
 
   class PropertyDescriptor {
-    constructor(value, enumerable, writable, configurable) {
+    constructor(value, enumerable, writable, configurable, valueIsFactory) {
+      this.isFactory = typeof value === 'function' && typeof valueIsFactory === 'undefined' ? true : valueIsFactory;
       this.value = value;
       this.enumerable = typeof enumerable === 'undefined' ? true : false;
       this.writable = typeof writable === 'undefined' ? true : false;
@@ -15,7 +16,16 @@
     }
 
     clone() {
-      return new PropertyDescriptor(this.value, this.enumerable, this.writable, this.configurable);
+      return new PropertyDescriptor(this.value, this.enumerable, this.writable, this.configurable, this.isFactory);
+    }
+
+    toObject() {
+      return {
+        value: this.isFactory ? this.value(this) : this.value,
+        enumerable: this.enumerable,
+        writable: this.writable,
+        configurable: this.configurable
+      };
     }
   }
 
@@ -66,7 +76,7 @@
           if (instanceProperties.findIndex(function (d) {
             return (d === methodName) || (Array.isArray(d) && d[0] === methodName);
           }) === -1) {
-            instanceProperties.push([ methodName, new PropertyDescriptor(isFunction ? overrideMethod : SafeObject.prototype[methodName], false, true, true) ]);
+            instanceProperties.push([ methodName, new PropertyDescriptor(isFunction ? overrideMethod : SafeObject.prototype[methodName], false, true, true, false) ]);
           }
         }
 
@@ -150,7 +160,7 @@
         warn('Property descriptor isnt well formed for ' + String(fieldName) + '.');
         return;
       }
-      Object.defineProperty(object, fieldName, propertyDescriptor);
+      Object.defineProperty(object, fieldName, propertyDescriptor.toObject());
     }
 
     static parsePropertyDescriptor(propertyDescriptor) {
@@ -176,6 +186,7 @@
   }
 
   SafeObject.debugMode = false;
+  SafeObject.VERSION = '1.1.4';
   SafeObject.SAFE_OBJECT_INITIALIZE = 1;
   SafeObject.SAFE_OBJECT_DESTROY = 2;
 

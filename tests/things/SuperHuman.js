@@ -1,4 +1,5 @@
 var Human = require('./Human.js');
+var SafeObject = require('../../dist/SafeObject.js');
 
 function SuperHuman(name) {
   Human.call(this, name);
@@ -15,6 +16,13 @@ SuperHuman.prototype = Object.create(Human && Human.prototype, {
     enumerable: false, writable: true, configurable: true
   }
 });
-SuperHuman.INSTANCE_PROPERTIES = [ 'superPowers' ];
+SuperHuman.INSTANCE_PROPERTIES = [
+  [ 'superPowers', function () { return []; } ],
+  [ 'superPowersMap', function () { return {}; } ],
+  [ 'isSafeObject', new SafeObject.PropertyDescriptor(function () { return this._isSafeObject; }, false, true, true, false) ],
+  [ 'superName', '' ],
+  [ 'musclesPerSquareCentimeter', 1e2 ],
+  [ 'superFriends', new SafeObject.PropertyDescriptor(function () { return []; }, true, false, false) ]
+];
 
 module.exports = SuperHuman;

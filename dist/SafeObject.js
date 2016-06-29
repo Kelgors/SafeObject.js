@@ -12,9 +12,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   }
 
   var PropertyDescriptor = function () {
-    function PropertyDescriptor(value, enumerable, writable, configurable) {
+    function PropertyDescriptor(value, enumerable, writable, configurable, valueIsFactory) {
       _classCallCheck(this, PropertyDescriptor);
 
+      this.isFactory = typeof value === 'function' && typeof valueIsFactory === 'undefined' ? true : valueIsFactory;
       this.value = value;
       this.enumerable = typeof enumerable === 'undefined' ? true : false;
       this.writable = typeof writable === 'undefined' ? true : false;
@@ -24,7 +25,17 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     _createClass(PropertyDescriptor, [{
       key: 'clone',
       value: function clone() {
-        return new PropertyDescriptor(this.value, this.enumerable, this.writable, this.configurable);
+        return new PropertyDescriptor(this.value, this.enumerable, this.writable, this.configurable, this.isFactory);
+      }
+    }, {
+      key: 'toObject',
+      value: function toObject() {
+        return {
+          value: this.isFactory ? this.value(this) : this.value,
+          enumerable: this.enumerable,
+          writable: this.writable,
+          configurable: this.configurable
+        };
       }
     }]);
 
@@ -90,7 +101,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             if (instanceProperties.findIndex(function (d) {
               return d === methodName || Array.isArray(d) && d[0] === methodName;
             }) === -1) {
-              instanceProperties.push([methodName, new PropertyDescriptor(isFunction ? overrideMethod : SafeObject.prototype[methodName], false, true, true)]);
+              instanceProperties.push([methodName, new PropertyDescriptor(isFunction ? overrideMethod : SafeObject.prototype[methodName], false, true, true, false)]);
             }
           }
 
@@ -186,7 +197,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           warn('Property descriptor isnt well formed for ' + String(fieldName) + '.');
           return;
         }
-        Object.defineProperty(object, fieldName, propertyDescriptor);
+        Object.defineProperty(object, fieldName, propertyDescriptor.toObject());
       }
     }, {
       key: 'parsePropertyDescriptor',
