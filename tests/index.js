@@ -40,7 +40,7 @@ describe('SafeObject', function () {
 
   it('should give the ignored properties', function () {
     const superHuman = new SuperHuman('Martha');
-    superHuman._getIgnoredSafeObjectPropertyNames().should.have.length(1);
+    superHuman._getIgnoredSafeObjectPropertyNames().should.have.length(2);
     //  .and.should.eql([ 'ignoreMe' ]);
   });
 
@@ -110,7 +110,7 @@ describe('SafeObject Inclusion', function () {
 
   it('should give the ignored properties', function () {
     const superWhale = new SuperWhale('Martha');
-    superWhale._getIgnoredSafeObjectPropertyNames().should.have.length(0);
+    superWhale._getIgnoredSafeObjectPropertyNames().should.have.length(1);
   });
 
   it('should give the correct unregistered properties', function () {

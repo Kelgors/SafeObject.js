@@ -213,24 +213,27 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       _classCallCheck(this, SafeObject);
 
       SafeObject.setInstanceProperties(this, SafeObject.SAFE_OBJECT_INITIALIZE);
+      this._isDestroyed = false;
     }
 
     _createClass(SafeObject, [{
       key: 'destroy',
       value: function destroy() {
         SafeObject.setInstanceProperties(this, SafeObject.SAFE_OBJECT_DESTROY);
+        this._isDestroyed = true;
       }
     }, {
       key: '_getIgnoredSafeObjectPropertyNames',
       value: function _getIgnoredSafeObjectPropertyNames() {
-        return [];
+        return ['_isDestroyed'];
       }
     }]);
 
     return SafeObject;
   }();
 
-  SafeObject.debugMode = false;
+  SafeObject.debugMode = true;
+  SafeObject.VERSION = '1.1.5';
   SafeObject.SAFE_OBJECT_INITIALIZE = 1;
   SafeObject.SAFE_OBJECT_DESTROY = 2;
 

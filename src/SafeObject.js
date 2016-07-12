@@ -173,20 +173,22 @@
 
     constructor() {
       SafeObject.setInstanceProperties(this, SafeObject.SAFE_OBJECT_INITIALIZE);
+      this._isDestroyed = false;
     }
 
     destroy() {
       SafeObject.setInstanceProperties(this, SafeObject.SAFE_OBJECT_DESTROY);
+      this._isDestroyed = true;
     }
 
     _getIgnoredSafeObjectPropertyNames() {
-      return [];
+      return [ '_isDestroyed' ];
     }
 
   }
 
   SafeObject.debugMode = false;
-  SafeObject.VERSION = '1.1.4';
+  SafeObject.VERSION = '1.1.5';
   SafeObject.SAFE_OBJECT_INITIALIZE = 1;
   SafeObject.SAFE_OBJECT_DESTROY = 2;
 

@@ -12,7 +12,7 @@ SuperHuman.prototype = Object.create(Human && Human.prototype, {
     enumerable: false, writable: true, configurable: true
   },
   _getIgnoredSafeObjectPropertyNames: {
-    value: function _getIgnoredSafeObjectPropertyNames() { return [ 'ignoreMe' ]; },
+    value: function _getIgnoredSafeObjectPropertyNames() { return SafeObject.prototype._getIgnoredSafeObjectPropertyNames.call(this).concat([ 'ignoreMe' ]); },
     enumerable: false, writable: true, configurable: true
   }
 });
