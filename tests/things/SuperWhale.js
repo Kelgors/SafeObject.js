@@ -13,6 +13,6 @@ SuperWhale.prototype = Object.create(Whale.prototype, {
   }
 });
 
-SuperWhale.INSTANCE_PROPERTIES = [ 'name' ];
+SuperWhale.INSTANCE_PROPERTIES = { name: null };
 
 module.exports = SuperWhale;

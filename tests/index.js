@@ -1,4 +1,6 @@
-require('chai').should();
+const chai = require('chai');
+const expect = chai.expect;
+chai.should();
 
 const TEST_LOGS = !!process.env.TEST_VERBOSITY;
 
@@ -34,8 +36,8 @@ describe('SafeObject', function () {
     const human = new Human('George');
     const superHuman = new SuperHuman('Martha');
 
-    SafeObject.getRegisteredPropertyNames(human).should.be.eql([ 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', '_isSafeObject' ]);
-    SafeObject.getRegisteredPropertyNames(superHuman).should.be.eql([ 'superPowers', 'superPowersMap', 'isSafeObject', 'superName', 'musclesPerSquareCentimeter', 'superFriends', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', '_isSafeObject' ]);
+    SafeObject.getRegisteredPropertyNames(human).should.be.eql([ '_isSafeObject', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg' ]);
+    SafeObject.getRegisteredPropertyNames(superHuman).should.be.eql([ '_isSafeObject', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', 'superPowers', 'superPowersMap', 'isSafeObject', 'superName', 'musclesPerSquareCentimeter', 'superFriends' ]);
   });
 
   it('should give the ignored properties', function () {
@@ -134,4 +136,31 @@ describe('SafeObject Inclusion', function () {
 
   }
 
+});
+
+describe('SafeObject Constructor registration', function () {
+  var Vector3;
+  var defaultConstructors = [ Object, Array, Date, Map, Set ];
+  before(function () {
+    Vector3 = function Vector3(x, y, z) {
+      this.x = x | 0;
+      this.y = y | 0;
+      this.z = z | 0;
+    };
+  });
+  it('should have default constructors', function () {
+    defaultConstructors.forEach(function (ctr) {
+      SafeObject.getRegisteredConstructor(ctr).should.have.property('ConstructorFunction')
+        .and.be.equal(ctr);
+    });
+  });
+  it('should register/unregister constructor', function () {
+    SafeObject.registerConstructor(Vector3);
+    SafeObject.getRegisteredConstructor(Vector3)
+      .should.have.property('ConstructorFunction')
+        .and.be.equal(Vector3);
+    SafeObject.unregisterConstructor(Vector3);
+    expect(SafeObject.getRegisteredConstructor(Vector3)).to.be.a('undefined');
+
+  });
 });

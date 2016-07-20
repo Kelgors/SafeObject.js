@@ -16,13 +16,13 @@ SuperHuman.prototype = Object.create(Human && Human.prototype, {
     enumerable: false, writable: true, configurable: true
   }
 });
-SuperHuman.INSTANCE_PROPERTIES = [
-  [ 'superPowers', function () { return []; } ],
-  [ 'superPowersMap', function () { return {}; } ],
-  [ 'isSafeObject', new SafeObject.PropertyDescriptor(function () { return this._isSafeObject; }, false, true, true, false) ],
-  [ 'superName', '' ],
-  [ 'musclesPerSquareCentimeter', 1e2 ],
-  [ 'superFriends', new SafeObject.PropertyDescriptor(function () { return []; }, true, false, false) ]
-];
+SuperHuman.INSTANCE_PROPERTIES = {
+  superPowers: function () { return []; },
+  superPowersMap: Object, // new Map
+  isSafeObject: new SafeObject.PropertyDescriptor(function () { return this._isSafeObject; }, true, true, true, false),
+  superName: '',
+  musclesPerSquareCentimeter: 1e2,
+  superFriends: Array
+};
 
 module.exports = SuperHuman;

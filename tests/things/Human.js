@@ -11,11 +11,11 @@ Human.prototype = Object.create(SafeObject && SafeObject.prototype, {
     enumerable: false, writable: true, configurable: true
   }
 });
-Human.INSTANCE_PROPERTIES = [
-  'leftArm',
-  'rightArm',
-  'leftLeg',
-  'rightLeg'
-];
+Human.INSTANCE_PROPERTIES = {
+  leftArm: null,
+  rightArm: null,
+  leftLeg: null,
+  rightLeg: null
+};
 
 module.exports = Human;

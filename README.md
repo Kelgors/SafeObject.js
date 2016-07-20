@@ -66,22 +66,23 @@ new PropertyDescriptor(function () {return this.data.map(function (id) { return 
 ```
 
 ```javascript
-View.INSTANCE_PROPERTIES = [
+View.INSTANCE_PROPERTIES = {
   // will be initialize to (value: null, enumerable: true, writable: true, configurable: true, factory: false)
-  'request',
+  request: null,
   // will be initialize to (value: false, enumerable: true, writable: true, configurable: true, factory: false)
-  [ 'isRendered', false ],
+  isRendered: false,
   // will be initialize to (value: '', enumerable: false, writable: true, configurable: false, factory: false)
-  [ 'text', new SafeObject.PropertyDescriptor('', false, true, false) ],
+  text: new SafeObject.PropertyDescriptor('', false, true, false),
   // will be initialize to (value: function, enumerable: true, writable: true, configurable: true, factory: true)
-  [ 'childViews', function () {return [];} ],
-  [ '_isRequired', true ],
+  childViews: function () { return []; },
+  _isRequired: true,
   // will be initialize to (value: function, enumerable: false, writable: true, configurable: false, factory: false)
-  [ 'isRequired', new SafeObject.PropertyDescriptor(function () {return this._isRequired;}, false, true, false, false) ],
-  // examples for ES6 users
-  [ 'childViews', () => [] ],
-  [ 'isRequired', new SafeObject.PropertyDescriptor(() => this._isRequired, true, true, true, false) ]
-];
+  isRequired: new SafeObject.PropertyDescriptor(function () { return this._isRequired; }, false, true, false, false) ],
+
+  // or if your complex values dont need any arguments
+  childViews: Array,
+  attributes: Object
+};
 ```
 
 Now your instance should look like this:
@@ -107,4 +108,28 @@ view.text === null;
 view.childViews === null;
 view._isRequired === null;
 view.isRequired === null;
+```
+
+#### Define custom Constructor
+
+If you tried to use a custom class like a Native element like Array or Date, this shouldn't work.
+
+```javascript
+class Vector3 {
+  constructor(x, y, z) {
+    this.x = x | 0;
+    this.y = y | 0;
+    this.z = z | 0;
+  }
+}
+class Entity {}
+Entity.INSTANCE_PROPERTIES = {
+  speed: Vector3
+};
+```
+
+You must define this Class as registered to SafeObject
+
+```javascript
+SafeObject.registerConstructor(Vector3);
 ```

@@ -6,13 +6,21 @@
     else if (console.log) console.log.apply(console, arguments);
   }
 
+  const _registered_constructors = [];
+
   class PropertyDescriptor {
     constructor(value, enumerable, writable, configurable, valueIsFactory) {
-      this.isFactory = typeof value === 'function' && typeof valueIsFactory === 'undefined' ? true : valueIsFactory;
-      this.value = value;
       this.enumerable = typeof enumerable === 'undefined' ? true : false;
       this.writable = typeof writable === 'undefined' ? true : false;
       this.configurable = typeof configurable === 'undefined' ? true : false;
+      const registeredConstructor = SafeObject.getRegisteredConstructor(value);
+      if (registeredConstructor) {
+        this.value = registeredConstructor.construct.bind(registeredConstructor);
+        this.isFactory = true;
+      } else {
+        this.isFactory = typeof value === 'function' && typeof valueIsFactory === 'undefined' ? true : valueIsFactory || false;
+        this.value = value;
+      }
     }
 
     clone() {
@@ -26,6 +34,15 @@
         writable: this.writable,
         configurable: this.configurable
       };
+    }
+  }
+
+  class RegisteredConstructor {
+    constructor(ConstructorFunction) {
+      this.ConstructorFunction = ConstructorFunction;
+    }
+    construct() {
+      return new (this.ConstructorFunction)();
     }
   }
 
@@ -51,13 +68,13 @@
 
     static include(instance, options = {}) {
       if (SafeObject.isSafeObject(instance)) return instance;
-      if (!Array.isArray(instance.constructor.INSTANCE_PROPERTIES)) {
-        instance.constructor.INSTANCE_PROPERTIES = [];
+      if (!instance.constructor.INSTANCE_PROPERTIES) {
+        instance.constructor.INSTANCE_PROPERTIES = {};
       }
       const instanceProperties = instance.constructor.INSTANCE_PROPERTIES;
 
-      if (instanceProperties.findIndex(function (d) { return d === '_isSafeObject' || (Array.isArray(d) && d[0] === '_isSafeObject'); }) === -1) {
-        instanceProperties.push.apply(instanceProperties, SafeObject.INSTANCE_PROPERTIES);
+      if (!('_isSafeObject' in instanceProperties)) {
+        instanceProperties._isSafeObject = new PropertyDescriptor(true, false, false, false);
       }
 
       [
@@ -73,10 +90,11 @@
         }
         // define the method only if it hasnt the property or 'force' is true
         if (hasProperty && options.force || !hasProperty) {
-          if (instanceProperties.findIndex(function (d) {
-            return (d === methodName) || (Array.isArray(d) && d[0] === methodName);
-          }) === -1) {
-            instanceProperties.push([ methodName, new PropertyDescriptor(isFunction ? overrideMethod : SafeObject.prototype[methodName], false, true, true, false) ]);
+          if (!(methodName in instanceProperties)) {
+            instanceProperties[methodName] = new PropertyDescriptor(
+              isFunction ? overrideMethod : SafeObject.prototype[methodName],
+              false, true, true, false
+            );
           }
         }
 
@@ -92,9 +110,22 @@
         }
       });
 
-      SafeObject.setProperties(instance, SafeObject.SAFE_OBJECT_INITIALIZE, instanceProperties.concat(SafeObject.INSTANCE_PROPERTIES));
+      SafeObject.setProperties(instance, SafeObject.SAFE_OBJECT_INITIALIZE, Object.assign(instanceProperties, SafeObject.INSTANCE_PROPERTIES));
 
       return instance;
+    }
+
+    static getRegisteredConstructor(ConstructorFunction) {
+      return _registered_constructors.find((d) => { return d.ConstructorFunction === ConstructorFunction; });
+    }
+
+    static registerConstructor(ConstructorFunction) {
+      _registered_constructors.push(new RegisteredConstructor(ConstructorFunction));
+    }
+
+    static unregisterConstructor(ConstructorFunction) {
+      const index = _registered_constructors.findIndex((d) => { return d.ConstructorFunction === ConstructorFunction; });
+      return _registered_constructors.splice(index, 1)[0];
     }
 
     static isSafeObject(object) {
@@ -111,12 +142,11 @@
     }
 
     static getRegisteredProperties(safeObject) {
-      const ancestors = [ safeObject.constructor ].concat(SafeObject.getAncestors(safeObject));
-      const out = [];
-      for (let index = 0; index < ancestors.length; index++) {
-        out.push.apply(out, ancestors[index].INSTANCE_PROPERTIES);
-      }
-      return out;
+      const instanceProperties = [ safeObject.constructor ].concat(SafeObject.getAncestors(safeObject)).map(function (Constructor) {
+        return Constructor.INSTANCE_PROPERTIES;
+      }).reverse();
+      instanceProperties.unshift({});
+      return Object.assign(...instanceProperties);
     }
 
     static getUnregisteredPropertyNames(safeObject) {
@@ -128,7 +158,7 @@
     }
 
     static getRegisteredPropertyNames(safeObject) {
-      return SafeObject.getRegisteredProperties(safeObject).map(function (d) { return Array.isArray(d) ? d[0] : d; });
+      return Object.getOwnPropertyNames(SafeObject.getRegisteredProperties(safeObject));
     }
 
     static setInstanceProperties(safeObject, state) {
@@ -136,19 +166,10 @@
     }
 
     static setProperties(object, state, propertyDescriptors) {
-      for (let index = 0; index < propertyDescriptors.length; index++) {
+      for (const propertyName in propertyDescriptors) {
         try {
-          const attributeDescriptor = propertyDescriptors[index];
-          let fieldName;
-          let descriptor;
-          if (typeof attributeDescriptor === 'string') {
-            fieldName = attributeDescriptor;
-            descriptor = SafeObject.parsePropertyDescriptor(null);
-          } else if (Array.isArray(attributeDescriptor)) {
-            fieldName = attributeDescriptor[0];
-            descriptor = SafeObject.parsePropertyDescriptor(attributeDescriptor[1]);
-          }
-          SafeObject.setProperty(object, fieldName, descriptor, state);
+          const propertyDescriptor = SafeObject.parsePropertyDescriptor(propertyDescriptors[propertyName]);
+          SafeObject.setProperty(object, propertyName, propertyDescriptor, state);
         } catch (err) {
           warn('SafeObject#setProperties: ' + err.toString());
         }
@@ -188,15 +209,21 @@
   }
 
   SafeObject.debugMode = false;
-  SafeObject.VERSION = '1.1.5';
+  SafeObject.VERSION = '1.2.0';
   SafeObject.SAFE_OBJECT_INITIALIZE = 1;
   SafeObject.SAFE_OBJECT_DESTROY = 2;
 
-  SafeObject.INSTANCE_PROPERTIES = [
-    [ '_isSafeObject', new PropertyDescriptor(true, false, false, false) ]
-  ];
+  SafeObject.INSTANCE_PROPERTIES = {
+    _isSafeObject: new PropertyDescriptor(true, false, false, false)
+  };
 
   SafeObject.PropertyDescriptor = PropertyDescriptor;
+
+  SafeObject.registerConstructor(Object);
+  SafeObject.registerConstructor(Array);
+  SafeObject.registerConstructor(Date);
+  SafeObject.registerConstructor(Map);
+  SafeObject.registerConstructor(Set);
 
   if (typeof define === 'function' && define.amd) {
     define(function () {

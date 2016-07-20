@@ -2,6 +2,8 @@
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 (function (exportName) {
@@ -11,15 +13,23 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     if (console.warn) console.warn.apply(console, arguments);else if (console.log) console.log.apply(console, arguments);
   }
 
+  var _registered_constructors = [];
+
   var PropertyDescriptor = function () {
     function PropertyDescriptor(value, enumerable, writable, configurable, valueIsFactory) {
       _classCallCheck(this, PropertyDescriptor);
 
-      this.isFactory = typeof value === 'function' && typeof valueIsFactory === 'undefined' ? true : valueIsFactory;
-      this.value = value;
       this.enumerable = typeof enumerable === 'undefined' ? true : false;
       this.writable = typeof writable === 'undefined' ? true : false;
       this.configurable = typeof configurable === 'undefined' ? true : false;
+      var registeredConstructor = SafeObject.getRegisteredConstructor(value);
+      if (registeredConstructor) {
+        this.value = registeredConstructor.construct.bind(registeredConstructor);
+        this.isFactory = true;
+      } else {
+        this.isFactory = typeof value === 'function' && typeof valueIsFactory === 'undefined' ? true : valueIsFactory || false;
+        this.value = value;
+      }
     }
 
     _createClass(PropertyDescriptor, [{
@@ -40,6 +50,23 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     }]);
 
     return PropertyDescriptor;
+  }();
+
+  var RegisteredConstructor = function () {
+    function RegisteredConstructor(ConstructorFunction) {
+      _classCallCheck(this, RegisteredConstructor);
+
+      this.ConstructorFunction = ConstructorFunction;
+    }
+
+    _createClass(RegisteredConstructor, [{
+      key: 'construct',
+      value: function construct() {
+        return new this.ConstructorFunction();
+      }
+    }]);
+
+    return RegisteredConstructor;
   }();
 
   var SafeObject = function () {
@@ -74,15 +101,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
         if (SafeObject.isSafeObject(instance)) return instance;
-        if (!Array.isArray(instance.constructor.INSTANCE_PROPERTIES)) {
-          instance.constructor.INSTANCE_PROPERTIES = [];
+        if (!instance.constructor.INSTANCE_PROPERTIES) {
+          instance.constructor.INSTANCE_PROPERTIES = {};
         }
         var instanceProperties = instance.constructor.INSTANCE_PROPERTIES;
 
-        if (instanceProperties.findIndex(function (d) {
-          return d === '_isSafeObject' || Array.isArray(d) && d[0] === '_isSafeObject';
-        }) === -1) {
-          instanceProperties.push.apply(instanceProperties, SafeObject.INSTANCE_PROPERTIES);
+        if (!('_isSafeObject' in instanceProperties)) {
+          instanceProperties._isSafeObject = new PropertyDescriptor(true, false, false, false);
         }
 
         [{ methodName: 'destroy', returnsMerge: 'super' }, { methodName: '_getIgnoredSafeObjectPropertyNames', returnsMerge: 'concat' }].forEach(function (_ref) {
@@ -98,10 +123,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           }
           // define the method only if it hasnt the property or 'force' is true
           if (hasProperty && options.force || !hasProperty) {
-            if (instanceProperties.findIndex(function (d) {
-              return d === methodName || Array.isArray(d) && d[0] === methodName;
-            }) === -1) {
-              instanceProperties.push([methodName, new PropertyDescriptor(isFunction ? overrideMethod : SafeObject.prototype[methodName], false, true, true, false)]);
+            if (!(methodName in instanceProperties)) {
+              instanceProperties[methodName] = new PropertyDescriptor(isFunction ? overrideMethod : SafeObject.prototype[methodName], false, true, true, false);
             }
           }
 
@@ -119,9 +142,29 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           }
         });
 
-        SafeObject.setProperties(instance, SafeObject.SAFE_OBJECT_INITIALIZE, instanceProperties.concat(SafeObject.INSTANCE_PROPERTIES));
+        SafeObject.setProperties(instance, SafeObject.SAFE_OBJECT_INITIALIZE, Object.assign(instanceProperties, SafeObject.INSTANCE_PROPERTIES));
 
         return instance;
+      }
+    }, {
+      key: 'getRegisteredConstructor',
+      value: function getRegisteredConstructor(ConstructorFunction) {
+        return _registered_constructors.find(function (d) {
+          return d.ConstructorFunction === ConstructorFunction;
+        });
+      }
+    }, {
+      key: 'registerConstructor',
+      value: function registerConstructor(ConstructorFunction) {
+        _registered_constructors.push(new RegisteredConstructor(ConstructorFunction));
+      }
+    }, {
+      key: 'unregisterConstructor',
+      value: function unregisterConstructor(ConstructorFunction) {
+        var index = _registered_constructors.findIndex(function (d) {
+          return d.ConstructorFunction === ConstructorFunction;
+        });
+        return _registered_constructors.splice(index, 1)[0];
       }
     }, {
       key: 'isSafeObject',
@@ -141,12 +184,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     }, {
       key: 'getRegisteredProperties',
       value: function getRegisteredProperties(safeObject) {
-        var ancestors = [safeObject.constructor].concat(SafeObject.getAncestors(safeObject));
-        var out = [];
-        for (var index = 0; index < ancestors.length; index++) {
-          out.push.apply(out, ancestors[index].INSTANCE_PROPERTIES);
-        }
-        return out;
+        var instanceProperties = [safeObject.constructor].concat(SafeObject.getAncestors(safeObject)).map(function (Constructor) {
+          return Constructor.INSTANCE_PROPERTIES;
+        }).reverse();
+        instanceProperties.unshift({});
+        return Object.assign.apply(Object, _toConsumableArray(instanceProperties));
       }
     }, {
       key: 'getUnregisteredPropertyNames',
@@ -160,9 +202,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     }, {
       key: 'getRegisteredPropertyNames',
       value: function getRegisteredPropertyNames(safeObject) {
-        return SafeObject.getRegisteredProperties(safeObject).map(function (d) {
-          return Array.isArray(d) ? d[0] : d;
-        });
+        return Object.getOwnPropertyNames(SafeObject.getRegisteredProperties(safeObject));
       }
     }, {
       key: 'setInstanceProperties',
@@ -172,19 +212,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     }, {
       key: 'setProperties',
       value: function setProperties(object, state, propertyDescriptors) {
-        for (var index = 0; index < propertyDescriptors.length; index++) {
+        for (var propertyName in propertyDescriptors) {
           try {
-            var attributeDescriptor = propertyDescriptors[index];
-            var fieldName = void 0;
-            var descriptor = void 0;
-            if (typeof attributeDescriptor === 'string') {
-              fieldName = attributeDescriptor;
-              descriptor = SafeObject.parsePropertyDescriptor(null);
-            } else if (Array.isArray(attributeDescriptor)) {
-              fieldName = attributeDescriptor[0];
-              descriptor = SafeObject.parsePropertyDescriptor(attributeDescriptor[1]);
-            }
-            SafeObject.setProperty(object, fieldName, descriptor, state);
+            var propertyDescriptor = SafeObject.parsePropertyDescriptor(propertyDescriptors[propertyName]);
+            SafeObject.setProperty(object, propertyName, propertyDescriptor, state);
           } catch (err) {
             warn('SafeObject#setProperties: ' + err.toString());
           }
@@ -232,14 +263,22 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     return SafeObject;
   }();
 
-  SafeObject.debugMode = true;
-  SafeObject.VERSION = '1.1.5';
+  SafeObject.debugMode = false;
+  SafeObject.VERSION = '1.2.0';
   SafeObject.SAFE_OBJECT_INITIALIZE = 1;
   SafeObject.SAFE_OBJECT_DESTROY = 2;
 
-  SafeObject.INSTANCE_PROPERTIES = [['_isSafeObject', new PropertyDescriptor(true, false, false, false)]];
+  SafeObject.INSTANCE_PROPERTIES = {
+    _isSafeObject: new PropertyDescriptor(true, false, false, false)
+  };
 
   SafeObject.PropertyDescriptor = PropertyDescriptor;
+
+  SafeObject.registerConstructor(Object);
+  SafeObject.registerConstructor(Array);
+  SafeObject.registerConstructor(Date);
+  SafeObject.registerConstructor(Map);
+  SafeObject.registerConstructor(Set);
 
   if (typeof define === 'function' && define.amd) {
     define(function () {
