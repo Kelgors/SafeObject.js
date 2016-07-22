@@ -3,6 +3,7 @@
 const gulp = require('gulp');
 const babel = require('gulp-babel');
 const uglify = require('gulp-uglifyjs');
+const rename = require('gulp-rename');
 
 const sourceFiles = [ 'src/SafeObject.js' ];
 const moduleTypes = [ 'amd', 'systemjs', 'commonjs' ];
@@ -17,6 +18,7 @@ gulp.task('build:js:min', function () {
   return gulp.src(sourceFiles)
     .pipe(babel())
     .pipe(uglify())
+    .pipe(rename('SafeObject.min.js'))
     .pipe(gulp.dest('dist'));
 });
 
