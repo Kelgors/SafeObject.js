@@ -19,9 +19,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     function PropertyDescriptor(value, enumerable, writable, configurable, valueIsFactory) {
       _classCallCheck(this, PropertyDescriptor);
 
-      this.enumerable = typeof enumerable === 'undefined' ? true : false;
-      this.writable = typeof writable === 'undefined' ? true : false;
-      this.configurable = typeof configurable === 'undefined' ? true : false;
+      this.enumerable = typeof enumerable === 'undefined' ? true : enumerable;
+      this.writable = typeof writable === 'undefined' ? true : writable;
+      this.configurable = typeof configurable === 'undefined' ? true : configurable;
       var registeredConstructor = SafeObject.getRegisteredConstructor(value);
       if (registeredConstructor) {
         this.value = registeredConstructor.construct.bind(registeredConstructor);
