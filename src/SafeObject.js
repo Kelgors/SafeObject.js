@@ -10,9 +10,9 @@
 
   class PropertyDescriptor {
     constructor(value, enumerable, writable, configurable, valueIsFactory) {
-      this.enumerable = typeof enumerable === 'undefined' ? true : false;
-      this.writable = typeof writable === 'undefined' ? true : false;
-      this.configurable = typeof configurable === 'undefined' ? true : false;
+      this.enumerable = typeof enumerable === 'undefined' ? true : enumerable;
+      this.writable = typeof writable === 'undefined' ? true : writable;
+      this.configurable = typeof configurable === 'undefined' ? true : configurable;
       const registeredConstructor = SafeObject.getRegisteredConstructor(value);
       if (registeredConstructor) {
         this.value = registeredConstructor.construct.bind(registeredConstructor);
