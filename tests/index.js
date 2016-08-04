@@ -36,8 +36,8 @@ describe('SafeObject', function () {
     const human = new Human('George');
     const superHuman = new SuperHuman('Martha');
 
-    SafeObject.getRegisteredPropertyNames(human).should.be.eql([ '_isSafeObject', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg' ]);
-    SafeObject.getRegisteredPropertyNames(superHuman).should.be.eql([ '_isSafeObject', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', 'superPowers', 'superPowersMap', 'isSafeObject', 'superName', 'musclesPerSquareCentimeter', 'superFriends' ]);
+    SafeObject.getRegisteredPropertyNames(human).should.be.eql([ '_isSafeObject', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', 'isHuman' ]);
+    SafeObject.getRegisteredPropertyNames(superHuman).should.be.eql([ '_isSafeObject', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', 'isHuman', 'superPowers', 'superPowersMap', 'isSafeObject', 'superName', 'musclesPerSquareCentimeter', 'superFriends' ]);
   });
 
   it('should give the ignored properties', function () {
@@ -74,6 +74,13 @@ describe('SafeObject', function () {
     superHuman.should.have.property('rightArm').and.be.equal(null);
     superHuman.should.have.property('leftLeg').and.be.equal(null);
     superHuman.should.have.property('rightLeg').and.be.equal(null);
+    superHuman.should.have.property('isHuman').and.be.equal(true); // cause is non-configurable
+    superHuman.should.have.property('superPowers').and.be.equal(null);
+    superHuman.should.have.property('superPowersMap').and.be.equal(null);
+    superHuman.should.have.property('isSafeObject').and.be.equal(null);
+    superHuman.should.have.property('superName').and.be.equal(null);
+    superHuman.should.have.property('musclesPerSquareCentimeter').and.be.equal(null);
+    superHuman.should.have.property('superFriends').and.be.equal(null);
   });
 
   it('should set superPowers properties to [] insteadof function () {}', function () {
@@ -100,6 +107,16 @@ describe('SafeObject Inclusion', function () {
     superWhale.should.not.be.an.instanceOf(SafeObject);
   });
 
+  it('should have properties well defined', function () {
+
+    var superWhale = new SuperWhale('Martha');
+
+
+    superWhale.should.have.property('name').and.be.equal('Martha');
+    superWhale.should.have.property('createdAt').and.be.an.instanceOf(Object);
+    superWhale.should.have.property('updatedAt').and.be.an.instanceOf(Date);
+  });
+
   it('should list ancestors', function () {
     const superWhale = new SuperWhale('Martha');
     SafeObject.getAncestors(superWhale).should.be.eql([ Whale, Object ]);
@@ -107,25 +124,22 @@ describe('SafeObject Inclusion', function () {
 
   it('should list all instance properties for the class and all ancestors', function () {
     const superWhale = new SuperWhale('Martha');
-    SafeObject.getRegisteredPropertyNames(superWhale).should.be.eql([ 'name', '_isSafeObject', 'destroy', '_getIgnoredSafeObjectPropertyNames' ]);
-  });
-
-  it('should give the ignored properties', function () {
-    const superWhale = new SuperWhale('Martha');
-    superWhale._getIgnoredSafeObjectPropertyNames().should.have.length(1);
+    SafeObject.getRegisteredPropertyNames(superWhale).should.be.eql([ 'name', 'createdAt', 'updatedAt', '_isSafeObject' ]);
   });
 
   it('should give the correct unregistered properties', function () {
     const superWhale = new SuperWhale('Martha');
-    SafeObject.getUnregisteredPropertyNames(superWhale).should.have.length(0);
+    SafeObject.getUnregisteredPropertyNames(superWhale).should.have.length(1);
   });
 
   it('should set all properties to null', function () {
 
     var superWhale = new SuperWhale('Martha');
 
-    superWhale.destroy();
+    SafeObject.prototype.destroy.call(superWhale);
     superWhale.should.have.property('name').and.be.equal(null);
+    superWhale.should.have.property('createdAt').and.be.equal(null);
+    superWhale.should.have.property('updatedAt').and.be.equal(null);
   });
 
   if (TEST_LOGS) {

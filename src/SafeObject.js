@@ -57,60 +57,37 @@
         const ancestors = SafeObject.getAncestors(instance);
         buffer.push('Ancestors: ' + ancestors.map(function (d) {return d.name;}).join(' < '));
         const attributeNames = SafeObject.getRegisteredPropertyNames(instance);
-        const registeredAttributeNames = instance._getIgnoredSafeObjectPropertyNames().concat(attributeNames);
+        const ignoredProperties = typeof instance._getIgnoredSafeObjectPropertyNames === 'function' ? instance._getIgnoredSafeObjectPropertyNames() : [];
+        const registeredAttributeNames = ignoredProperties.concat(attributeNames);
         const unregisteredAttributeNames = Object.getOwnPropertyNames(instance).filter(function (d)  { return registeredAttributeNames.indexOf(d) === -1; });
-        buffer.push('ignored properties: ' + instance._getIgnoredSafeObjectPropertyNames().join(', '));
+        buffer.push('ignored properties: ' + ignoredProperties.join(', '));
         buffer.push('registered properties: ' + attributeNames.join(', '));
         buffer.push('unregistered properties: ' + unregisteredAttributeNames.join(', '));
       }
       return buffer.join('\n');
     }
 
-    static include(instance, options = {}) {
+    static include(instance) {
+      if (instance.constructor === Object) throw "Cannot include an Object"
       if (SafeObject.isSafeObject(instance)) return instance;
+
+      instance._isDestroyed = false;
       if (!instance.constructor.INSTANCE_PROPERTIES) {
         instance.constructor.INSTANCE_PROPERTIES = {};
       }
-      const instanceProperties = instance.constructor.INSTANCE_PROPERTIES;
+      const instanceProperties = SafeObject.getRegisteredProperties(instance);
 
       if (!('_isSafeObject' in instanceProperties)) {
-        instanceProperties._isSafeObject = new PropertyDescriptor(true, false, false, false);
+        const ancestors = SafeObject.getAncestors(instance).reverse();
+        let firstSafeObjectAncestor = ancestors.find((Ancestor) => { return !!Ancestor.INSTANCE_PROPERTIES; });
+        if (!firstSafeObjectAncestor) firstSafeObjectAncestor = instance.constructor;
+        instanceProperties._isSafeObject = firstSafeObjectAncestor.INSTANCE_PROPERTIES._isSafeObject = new PropertyDescriptor(true, false, false, true);
+      }
+      if (typeof instance._getIgnoredSafeObjectPropertyNames !== 'function') {
+        instance._getIgnoredSafeObjectPropertyNames = SafeObject.prototype._getIgnoredSafeObjectPropertyNames;
       }
 
-      [
-        { methodName: 'destroy', returnsMerge: 'super' },
-        { methodName: '_getIgnoredSafeObjectPropertyNames', returnsMerge: 'concat' }
-      ].forEach(function ({ methodName, returnsMerge }) {
-        // check if property exists and is a method
-        const hasProperty = methodName in instance;
-        const isFunction = typeof instance[methodName] === 'function';
-        const _superMethod = instance[methodName];
-        if (options.force && hasProperty) {
-          warn('Overriding ' + methodName + ' method');
-        }
-        // define the method only if it hasnt the property or 'force' is true
-        if (hasProperty && options.force || !hasProperty) {
-          if (!(methodName in instanceProperties)) {
-            instanceProperties[methodName] = new PropertyDescriptor(
-              isFunction ? overrideMethod : SafeObject.prototype[methodName],
-              false, true, true, false
-            );
-          }
-        }
-
-        function overrideMethod() {
-          const superOut = _superMethod.apply(this, arguments);
-          const safeObjectOut = SafeObject.prototype[methodName].call(this);
-          let out;
-          switch (returnsMerge) {
-            case 'super': out = superOut; break;
-            case 'concat': out = (superOut || []).concat(safeObjectOut || []); break;
-          }
-          return out;
-        }
-      });
-
-      SafeObject.setProperties(instance, SafeObject.SAFE_OBJECT_INITIALIZE, Object.assign(instanceProperties, SafeObject.INSTANCE_PROPERTIES));
+      SafeObject.setProperties(instance, SafeObject.SAFE_OBJECT_INITIALIZE, instanceProperties);
 
       return instance;
     }
@@ -145,13 +122,13 @@
       const instanceProperties = [ safeObject.constructor ].concat(SafeObject.getAncestors(safeObject)).map(function (Constructor) {
         return Constructor.INSTANCE_PROPERTIES;
       }).reverse();
-      instanceProperties.unshift({});
-      return Object.assign(...instanceProperties);
+      return Object.assign({}, ...instanceProperties);
     }
 
     static getUnregisteredPropertyNames(safeObject) {
       const registeredAttributeNames = SafeObject.getRegisteredPropertyNames(safeObject);
-      registeredAttributeNames.push.apply(registeredAttributeNames, safeObject._getIgnoredSafeObjectPropertyNames());
+      const ignoredProperties = typeof safeObject._getIgnoredSafeObjectPropertyNames === 'function' ? safeObject._getIgnoredSafeObjectPropertyNames() : [];
+      registeredAttributeNames.push.apply(registeredAttributeNames, ignoredProperties);
       return Object.getOwnPropertyNames(safeObject).filter(function (propertyName)  {
         return registeredAttributeNames.indexOf(propertyName) === -1;
       });
@@ -181,7 +158,9 @@
         warn('Property descriptor isnt well formed for ' + String(fieldName) + '.');
         return;
       }
-      Object.defineProperty(object, fieldName, propertyDescriptor.toObject());
+      const descriptor = propertyDescriptor.toObject();
+      if (state === SafeObject.SAFE_OBJECT_DESTROY) descriptor.value = null;
+      Object.defineProperty(object, fieldName, descriptor);
     }
 
     static parsePropertyDescriptor(propertyDescriptor) {
@@ -209,12 +188,12 @@
   }
 
   SafeObject.debugMode = false;
-  SafeObject.VERSION = '1.2.0';
+  SafeObject.VERSION = '1.2.2';
   SafeObject.SAFE_OBJECT_INITIALIZE = 1;
   SafeObject.SAFE_OBJECT_DESTROY = 2;
 
   SafeObject.INSTANCE_PROPERTIES = {
-    _isSafeObject: new PropertyDescriptor(true, false, false, false)
+    _isSafeObject: new PropertyDescriptor(true, false, false, true)
   };
 
   SafeObject.PropertyDescriptor = PropertyDescriptor;

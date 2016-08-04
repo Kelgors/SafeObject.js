@@ -3,7 +3,6 @@ var Whale = require('./Whale.js');
 
 function SuperWhale(name) {
   Whale.call(this, name);
-  SafeObject.include(this);
 }
 
 SuperWhale.prototype = Object.create(Whale.prototype, {
@@ -13,6 +12,9 @@ SuperWhale.prototype = Object.create(Whale.prototype, {
   }
 });
 
-SuperWhale.INSTANCE_PROPERTIES = { name: null };
+SuperWhale.INSTANCE_PROPERTIES = {
+  name: null,
+  createdAt: Object
+};
 
 module.exports = SuperWhale;

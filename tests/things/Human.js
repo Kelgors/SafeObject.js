@@ -15,7 +15,8 @@ Human.INSTANCE_PROPERTIES = {
   leftArm: null,
   rightArm: null,
   leftLeg: null,
-  rightLeg: null
+  rightLeg: null,
+  isHuman: new SafeObject.PropertyDescriptor(true, true, false, false)
 };
 
 module.exports = Human;
