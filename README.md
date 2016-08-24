@@ -11,7 +11,7 @@ bower install SafeObject.js
 
 #### Inherit/Include SafeObject
 
-First, you need to include or extend your class/function with SafeObject (Notice the constructor property is __required__)
+First, you need to include or extend your class/function with SafeObject (__Notice the constructor property is required__)
 
 ```javascript
 // Inheritance
