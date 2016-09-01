@@ -35,6 +35,15 @@
         configurable: this.configurable
       };
     }
+
+    toNullObject() {
+      return {
+        value: null,
+        enumerable: this.enumerable,
+        writable: this.writable,
+        configurable: this.configurable
+      };
+    }
   }
 
   class RegisteredConstructor {
@@ -158,8 +167,11 @@
         warn('Property descriptor isnt well formed for ' + String(fieldName) + '.');
         return;
       }
-      const descriptor = propertyDescriptor.toObject();
-      if (state === SafeObject.SAFE_OBJECT_DESTROY) descriptor.value = null;
+      let descriptor;
+      if (state === SafeObject.SAFE_OBJECT_DESTROY)
+        descriptor = propertyDescriptor.toNullObject();
+      else if (state === SafeObject.SAFE_OBJECT_INITIALIZE)
+        descriptor = propertyDescriptor.toObject();
       Object.defineProperty(object, fieldName, descriptor);
     }
 

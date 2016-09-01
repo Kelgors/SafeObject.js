@@ -47,6 +47,16 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           configurable: this.configurable
         };
       }
+    }, {
+      key: 'toNullObject',
+      value: function toNullObject() {
+        return {
+          value: null,
+          enumerable: this.enumerable,
+          writable: this.writable,
+          configurable: this.configurable
+        };
+      }
     }]);
 
     return PropertyDescriptor;
@@ -206,8 +216,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           warn('Property descriptor isnt well formed for ' + String(fieldName) + '.');
           return;
         }
-        var descriptor = propertyDescriptor.toObject();
-        if (state === SafeObject.SAFE_OBJECT_DESTROY) descriptor.value = null;
+        var descriptor = void 0;
+        if (state === SafeObject.SAFE_OBJECT_DESTROY) descriptor = propertyDescriptor.toNullObject();else if (state === SafeObject.SAFE_OBJECT_INITIALIZE) descriptor = propertyDescriptor.toObject();
         Object.defineProperty(object, fieldName, descriptor);
       }
     }, {
