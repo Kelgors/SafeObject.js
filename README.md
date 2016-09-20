@@ -122,7 +122,7 @@ class Vector3 {
     this.z = z | 0;
   }
 }
-class Entity {}
+class Entity extends SafeObject {}
 Entity.INSTANCE_PROPERTIES = {
   speed: Vector3
 };

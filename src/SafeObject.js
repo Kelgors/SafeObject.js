@@ -199,31 +199,56 @@
 
   }
 
-  SafeObject.debugMode = false;
-  SafeObject.VERSION = '1.2.2';
-  SafeObject.SAFE_OBJECT_INITIALIZE = 1;
-  SafeObject.SAFE_OBJECT_DESTROY = 2;
+  // define static values
+  Object.defineProperties(SafeObject, {
+    debugMode: {
+      enumerable: false, writable: true, configurable: true,
+      value: false
+    },
+    VERSION: {
+      enumerable: false, writable: false, configurable: false,
+      value: '1.2.4'
+    },
+    SAFE_OBJECT_INITIALIZE: {
+      enumerable: false, writable: false, configurable: false,
+      value: 1
+    },
+    SAFE_OBJECT_DESTROY: {
+      enumerable: false, writable: false, configurable: false,
+      value: 2
+    },
+    INSTANCE_PROPERTIES: {
+      enumerable: true, writable: true, configurable: true,
+      value: {
+        _isSafeObject: new PropertyDescriptor(true, false, false, true)
+      }
+    },
+    PropertyDescriptor: {
+      enumerable: true, writable: true, configurable: true,
+      value: PropertyDescriptor
+    }
+  });
 
-  SafeObject.INSTANCE_PROPERTIES = {
-    _isSafeObject: new PropertyDescriptor(true, false, false, true)
-  };
-
-  SafeObject.PropertyDescriptor = PropertyDescriptor;
-
+  // Define default constructors
   SafeObject.registerConstructor(Object);
   SafeObject.registerConstructor(Array);
   SafeObject.registerConstructor(Date);
-  SafeObject.registerConstructor(Map);
-  SafeObject.registerConstructor(Set);
+  if (typeof WeakSet !== 'undefined') SafeObject.registerConstructor(WeakSet);
+  if (typeof WeakMap !== 'undefined') SafeObject.registerConstructor(WeakMap);
+  if (typeof Map !== 'undefined') SafeObject.registerConstructor(Map);
+  if (typeof Set !== 'undefined') SafeObject.registerConstructor(Set);
+
+  const root = (typeof self == 'object' && self.self === self && self) ||
+              (typeof global == 'object' && global.global === global && global);
 
   if (typeof define === 'function' && define.amd) {
     define(function () {
       return SafeObject;
     });
-  } else if (typeof module !== 'undefined' && module.exports) {
+  } else if (typeof module !== 'undefined' && 'exports' in module) {
     module.exports = SafeObject;
   } else {
-    this[exportName] = SafeObject;
+    root[exportName] = SafeObject;
   }
 })('SafeObject');
 

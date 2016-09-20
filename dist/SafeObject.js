@@ -1,5 +1,7 @@
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -253,30 +255,56 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     return SafeObject;
   }();
 
-  SafeObject.debugMode = false;
-  SafeObject.VERSION = '1.2.2';
-  SafeObject.SAFE_OBJECT_INITIALIZE = 1;
-  SafeObject.SAFE_OBJECT_DESTROY = 2;
+  // define static values
 
-  SafeObject.INSTANCE_PROPERTIES = {
-    _isSafeObject: new PropertyDescriptor(true, false, false, true)
-  };
 
-  SafeObject.PropertyDescriptor = PropertyDescriptor;
+  Object.defineProperties(SafeObject, {
+    debugMode: {
+      enumerable: false, writable: true, configurable: true,
+      value: false
+    },
+    VERSION: {
+      enumerable: false, writable: false, configurable: false,
+      value: '1.2.4'
+    },
+    SAFE_OBJECT_INITIALIZE: {
+      enumerable: false, writable: false, configurable: false,
+      value: 1
+    },
+    SAFE_OBJECT_DESTROY: {
+      enumerable: false, writable: false, configurable: false,
+      value: 2
+    },
+    INSTANCE_PROPERTIES: {
+      enumerable: true, writable: true, configurable: true,
+      value: {
+        _isSafeObject: new PropertyDescriptor(true, false, false, true)
+      }
+    },
+    PropertyDescriptor: {
+      enumerable: true, writable: true, configurable: true,
+      value: PropertyDescriptor
+    }
+  });
 
+  // Define default constructors
   SafeObject.registerConstructor(Object);
   SafeObject.registerConstructor(Array);
   SafeObject.registerConstructor(Date);
-  SafeObject.registerConstructor(Map);
-  SafeObject.registerConstructor(Set);
+  if (typeof WeakSet !== 'undefined') SafeObject.registerConstructor(WeakSet);
+  if (typeof WeakMap !== 'undefined') SafeObject.registerConstructor(WeakMap);
+  if (typeof Map !== 'undefined') SafeObject.registerConstructor(Map);
+  if (typeof Set !== 'undefined') SafeObject.registerConstructor(Set);
+
+  var root = (typeof self === 'undefined' ? 'undefined' : _typeof(self)) == 'object' && self.self === self && self || (typeof global === 'undefined' ? 'undefined' : _typeof(global)) == 'object' && global.global === global && global;
 
   if (typeof define === 'function' && define.amd) {
     define(function () {
       return SafeObject;
     });
-  } else if (typeof module !== 'undefined' && module.exports) {
+  } else if (typeof module !== 'undefined' && 'exports' in module) {
     module.exports = SafeObject;
   } else {
-    this[exportName] = SafeObject;
+    root[exportName] = SafeObject;
   }
 })('SafeObject');
