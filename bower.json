@@ -1,8 +1,8 @@
 {
-  "name": "SafeObject.js",
-  "version": "1.2.4",
+  "name": "safeobject",
+  "version": "1.2.5",
   "description": "",
-  "main": "dist/SafeObject.js",
+  "main": "dist/safeobject.js",
   "authors": [
     "Matthieu BOHEAS <matthieuboheas@gmail.com>"
   ],

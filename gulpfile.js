@@ -5,7 +5,7 @@ const babel = require('gulp-babel');
 const uglify = require('gulp-uglifyjs');
 const rename = require('gulp-rename');
 
-const sourceFiles = [ 'src/SafeObject.js' ];
+const sourceFiles = [ 'src/safeobject.js' ];
 const moduleTypes = [ 'amd', 'systemjs', 'commonjs' ];
 const fileName = 'SafeObject';
 

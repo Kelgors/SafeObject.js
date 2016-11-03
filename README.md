@@ -5,8 +5,8 @@ SafeObject is a class to manage your instance properties. When the object is con
 ### How-To
 
 ```bash
-npm install SafeObject.js
-bower install SafeObject.js
+npm install safeobject
+bower install safeobject
 ```
 
 #### Inherit/Include SafeObject
